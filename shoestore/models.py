@@ -16,11 +16,12 @@ class Category(models.Model):
     
     
     def save(self, *args, **kwargs):
-        self.slug = slugify(self.name)
+        combined_string = f"{self.name} {self.gender}"
+        self.slug = slugify(combined_string)
         super().save(args,kwargs)
         
     def __str__(self): #url oluşturma
-        return f"{self.name}"
+        return f"{self.name},{self.gender}"
 
 
 
@@ -44,6 +45,7 @@ class Shoes(models.Model):
     
     
     def save(self, *args, **kwargs):
-        self.slug = slugify(self.title)
+        combined_string = f"{self.title} {self.gender}"
+        self.slug = slugify(combined_string)
         super().save(args,kwargs)
         

@@ -1,6 +1,6 @@
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from .models import Shoes,Category
+from .models import Shoes,Category,Gender
 from rest_framework.decorators import api_view
 from django.contrib.auth.decorators import login_required
 
@@ -96,22 +96,45 @@ def details(request,slug):
     return Response(context)
 
 
-
+#Cİnsiyete göre kategorideki ayakkabilar gelmesi
 @api_view(['GET'])
-def getShoesByCategory(request,slug):
-    ayakkabilar=Shoes.objects.filter(isActive=True).order_by('title')
-    kategoriler=Category.objects.all()
+def getShoesByCategory(request):
     
+    gender = request.query_params.get('gender', None)
+    category_name = request.query_params.get('category', None)
     
-    shoes_serializer = ShoesSerializer(ayakkabilar, many=True)
-    categories_serializer = CategorySerializer(kategoriler, many=True)
+    # Eğer gender bilgisi yoksa hata döndürülüyor
+    if gender is None:
+        return Response({"error": "Gender parameter is required."}, status=400)
 
-    response_data = {
-        'shoes': shoes_serializer.data,
-        'categories': categories_serializer.data
-    }
+    if not category_name:
+        return Response({"error": "Category parameter is required."}, status=400)
+
+
+    try:
+        # Belirli bir kategoriyi adı ile bul
+        category = Category.objects.get(name=category_name)
+    except Category.DoesNotExist:
+        return Response({"error": "Category not found."}, status=404)
+
+
+    if gender in ['M', 'F'] and category :
+        ayakkabilar=Shoes.objects.filter(isActive=True,gender=gender,categories=category).order_by('title')
+        kategoriler=Category.objects.filter(gender=gender)
+        
+        
+        shoes_serializer = ShoesSerializer(ayakkabilar, many=True)
+        categories_serializer = CategorySerializer(kategoriler, many=True)
+
+        response_data = {
+            'shoes': shoes_serializer.data,
+            #'categories': categories_serializer.data
+        }
     
-    return Response(response_data)
+        return Response(response_data)
+    
+    else:
+        return Response({"error": "Invalid gender parameter. Use 'M' for Male or 'F' for Female."}, status=400)
     
     """
     return render(request,{
@@ -119,3 +142,43 @@ def getShoesByCategory(request,slug):
         'shoes': ayakkabilar
     })"""
     
+    """
+    http://127.0.0.1:8000/category/?gender=M
+    http://127.0.0.1:8000/category/?gender=F
+    """
+    
+    
+    
+    
+#cinsiyete göre ayakkabı filtrelemesi yapiyorr => Tüm ayakkabilar geliyor    
+@api_view(['GET'])    
+def getShoesByGender(request):
+    
+    # response_data'dan cinsiyet bilgisi alınıyor
+    response_data = {
+        'gender': request.query_params.get('gender', None)
+    }
+    
+    gender = response_data.get('gender', None)
+    
+    # Eğer gender bilgisi yoksa hata döndürülüyor
+    if gender is None:
+        return Response({"error": "Gender parameter is required."}, status=400)
+
+    
+    # Cinsiyet bilgisine göre ayakkabılar filtreleniyor
+    if gender in ['M', 'F']:
+        ayakkabilar=Shoes.objects.filter(isActive=True,gender=gender).order_by('title')
+    
+        shoes_serializer = ShoesSerializer(ayakkabilar, many=True)
+    
+        return Response(shoes_serializer.data)
+    
+    else:
+        return Response({"error": "Invalid gender parameter. Use 'M' for Male or 'F' for Female."}, status=400)
+    
+    
+    """ Bu url ile cinsiyete göre ayakkabı filtrelemesi yapiyorr
+    http://127.0.0.1:8000/filter/?gender=M
+    http://127.0.0.1:8000/filter/?gender=F
+    """
