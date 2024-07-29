@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
-
+from rest_framework.decorators import api_view
 # Create your views here.
 
 class RegisterView(APIView):
@@ -23,8 +23,40 @@ class RegisterView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
-    
+
+
+
 class LoginView(APIView):
+    
+    def user_login(request):
+        if request.user.is_authenticated and "next" in request.GET:
+            return render(request,messages.SUCCESS,"Deneme")
+        if request.method=="POST":
+            form=LoginUserForm(request,data=request.POST)
+            if form.is_valid():
+                username=form.cleaned_data.get("username")
+                password=form.cleaned_data.get("password")
+                
+                user=authenticate(request,username=username,password=password)
+                
+                if user is not None:
+                    login(request,user)
+                    messages.add_message(request,messages.SUCCESS,"Giriş Başarılı")
+                    nextUrl=request.GET.get("next",None)
+                    if nextUrl is None:
+                        return HttpResponse("if 1") #Anasayfaya yönlendir
+                    else:
+                        return redirect(nextUrl)
+                else:
+                    return HttpResponse("else 1") #Logine yönlendir
+            else:
+                return HttpResponse("else 2")#Logine yönlendir
+        else:
+            form=LoginUserForm()
+            return HttpResponse("else 3")#Logine yönlendir
+        
+        
+    @api_view(['POST'])    
     def post(self,request):
         email=request.data['email']
         password=request.data['password']
@@ -55,7 +87,39 @@ class LoginView(APIView):
         }
         
         return response
+    
+    
+"""
+def user_login(request):
+    if request.user.is_authenticated and "next" in request.GET:
+        return render(request,messages.SUCCESS,"Deneme")
+    
+    if request.method=="POST":
+        form=LoginUserForm(request,data=request.POST)
+        if form.is_valid():
+            username=form.cleaned_data.get("username")
+            password=form.cleaned_data.get("password")
             
+            user=authenticate(request,username=username,password=password)
+            
+            if user is not None:
+                login(request,user)
+                messages.add_message(request,messages.SUCCESS,"Giriş Başarılı")
+                nextUrl=request.GET.get("next",None)
+                if nextUrl is None:
+                    return HttpResponse("if 1") #Anasayfaya yönlendir
+                else:
+                    return redirect(nextUrl)
+            else:
+                return HttpResponse("else 1") #Logine yönlendir
+        else:
+            return HttpResponse("else 2")#Logine yönlendir
+    else:
+        form=LoginUserForm()
+        return HttpResponse("else 3")#Logine yönlendir
+"""
+    
+                
 class UserView(APIView) :
     def get(self,request):
         token=request.COOKIES.get('jwt')     
@@ -90,37 +154,7 @@ class Home(APIView):
         content={'message': 'Hello, World!'}
         return Response(content)
 
-"""
-def user_login(request):
-    if request.user.is_authenticated and "next" in request.GET:
-        return render(request,messages.SUCCESS,"Deneme")
-    
-    if request.method=="POST":
-        form=LoginUserForm(request,data=request.POST)
-        if form.is_valid():
-            username=form.cleaned_data.get("username")
-            password=form.cleaned_data.get("password")
-            
-            user=authenticate(request,username=username,password=password)
-            
-            if user is not None:
-                login(request,user)
-                messages.add_message(request,messages.SUCCESS,"Giriş Başarılı")
-                nextUrl=request.GET.get("next",None)
-                if nextUrl is None:
-                    return HttpResponse("if 1") #Anasayfaya yönlendir
-                else:
-                    return redirect(nextUrl)
-            else:
-                return HttpResponse("else 1") #Logine yönlendir
-        else:
-            return HttpResponse("else 2")#Logine yönlendir
-    else:
-        form=LoginUserForm()
-        return HttpResponse("else 3")#Logine yönlendir
-"""
-    
-    
+
 """   
 def user_register(request):
     if request.method== "POST":

@@ -19,5 +19,6 @@ class ShoesSerializer(serializers.Serializer):
     image=serializers.ImageField(default="")
     isActive=serializers.BooleanField(default=True)
     isHome=serializers.BooleanField(default=True)
+    
     #category=serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
     #category eklenmedi
