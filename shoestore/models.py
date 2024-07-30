@@ -8,7 +8,17 @@ class Gender(models.TextChoices):
     MALE = 'M', 'Male'
     FEMALE = 'F', 'Female'
 
+"""class SizeNo(models.TextChoices):
+        otuzalti= '36',
+        otuzalti= '36',
+        otuzalti= '36',
+        otuzalti= '36',
+        otuzalti= '36',
+        
+        ('37', '37'),
+    """
 
+    
 class Category(models.Model):
     name=models.CharField(max_length=50)
     gender = models.CharField(max_length=6, choices=Gender.choices,default='Female')
@@ -28,8 +38,8 @@ class Category(models.Model):
 class Shoes(models.Model):
     title=models.CharField(max_length=255)
     category = models.ForeignKey(Category, on_delete=models.CASCADE),
-    gender = models.CharField(max_length=6, choices=Gender.choices,default='Female')
-    size = models.DecimalField(max_digits=3, decimal_places=1)
+    gender = models.CharField(max_length=6, choices=Gender.choices,)
+    size = models.CharField(max_length=2)
     description=models.CharField(max_length=255,default="")
     price = models.DecimalField(max_digits=10, decimal_places=2)
     stock = models.IntegerField()
@@ -45,7 +55,19 @@ class Shoes(models.Model):
     
     
     def save(self, *args, **kwargs):
+        """if self.gender == Gender.MALE:
+            valid_sizes = [size for size, _ in SizeNo.MALE_SIZES]
+        else:
+            valid_sizes = [size for size, _ in SizeNo.FEMALE_SIZES]
+
+        if self.size not in valid_sizes:
+            raise ValueError("Invalid shoe size for the selected gender")
+        
+        """
+        
+        
         combined_string = f"{self.title} {self.gender}"
         self.slug = slugify(combined_string)
-        super().save(args,kwargs)
         
+       
+        super().save(*args,**kwargs)

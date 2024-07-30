@@ -52,6 +52,9 @@ def shoes_list(request):
         'shoes': ayakkabilar
     })
     """
+    
+def shopping_cart(request):
+    pass
 
 
 
@@ -146,7 +149,6 @@ def getShoesByCategory(request):
     http://127.0.0.1:8000/category/?gender=M
     http://127.0.0.1:8000/category/?gender=F
     """
-    
     
     
     

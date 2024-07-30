@@ -22,3 +22,34 @@ class ShoesSerializer(serializers.Serializer):
     
     #category=serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
     #category eklenmedi
+
+
+
+
+
+"""from shoestore.models import Shoes, Category
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'gender']
+
+class ShoesSerializer(serializers.ModelSerializer):
+    category = CategorySerializer()
+
+    class Meta:
+        model = Shoes
+        fields = [
+            'id',
+            'gender',
+            'title',
+            'size',
+            'description',
+            'price',
+            'stock',
+            'image',
+            'isActive',
+            'isHome',
+            'category'
+        ]
+    """
