@@ -1,17 +1,13 @@
 from django.contrib import admin
-from .models import Shoes,Category
+from .models import Shoe,Cart,CartItem
 
 # Register your models here.
 
-@admin.register(Shoes)
+@admin.register(Shoe)
 class ShoesAdmin(admin.ModelAdmin):
-    list_display=("title","isActive","isHome",)
+    list_display=("title","isActive","isHome","gender","category",)
     list_display_links=("title",)
-    list_filter=("title","isActive","isHome",)
+    list_filter=("title","isActive","isHome","gender","category",)
     list_editable=("isActive","isHome",)
     
-    
-@admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
-    list_display=("name",)
-    
+admin.site.register([Cart,CartItem])

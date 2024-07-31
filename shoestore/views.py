@@ -1,105 +1,131 @@
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect, render
-from .models import Shoes,Category,Gender
-from rest_framework.decorators import api_view
+from django.shortcuts import get_object_or_404, redirect
+from .models import Shoe,Category,Cart, CartItem
+from rest_framework.decorators import api_view,action
 from django.contrib.auth.decorators import login_required
+from .serializer import ShoesSerializer,CartItemSerializer
 
-from .serializer import ShoesSerializer,CategorySerializer
-
-from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
-
+from rest_framework import status
 # Create your views here.
 
 @api_view(['GET'])
 def index(request):
+    """ anasayfa/ shoes
+    anasayfa/ shoe-add/
+    anasayfa/ search/
+    anasayfa/ add-to-shoppingcart/
+    anasayfa/ shopping-cart/ [name='shopping_cart_detail']
+    anasayfa/ category/
+    anasayfa/ filter/"""
     if request.method=="GET":
-        ayakkabilar=Shoes.objects.filter(isActive=1,isHome=1)
-        kategoriler=Category.objects.all()
         
-        
+        ayakkabilar=Shoe.objects.filter(isActive=1,isHome=1)
+        #kategoriler=Category.objects.all()
+     
         shoes_serializer = ShoesSerializer(ayakkabilar, many=True)
-        categories_serializer = CategorySerializer(kategoriler, many=True)
+        #categories_serializer = CategorySerializer(kategoriler, many=True)
 
         response_data = {
             'shoes': shoes_serializer.data,
-            'categories': categories_serializer.data
+            #'categories': categories_serializer.data
         }
-
     return Response(response_data)
-        
-    """
-    return render(request,{
-        'categories': kategoriler,
-        'shoes': ayakkabilar
-    })
-    """
     
+@api_view(['POST'])
+def shoe_add(request):
+    if request.method=="POST":
+        shoes_serializer = ShoesSerializer(data=request.data)
+        if shoes_serializer.is_valid():
+            shoes_serializer.save()
+            return Response(shoes_serializer.data,status=status.HTTP_201_CREATED)
+        else:
+            return Response(shoes_serializer.errors)
+
 @api_view(['GET'])
-#@login_required()
-def shoes_list(request):
-    ayakkabilar=Shoes.objects.all()
-    
-    shoes_serializer = ShoesSerializer(ayakkabilar, many=True)
-    response_data = {
-        'shoes': shoes_serializer.data
-    }
-    
-    return Response(response_data)
-    
-    """
-    return render(request,{
-        'shoes': ayakkabilar
-    })
-    """
-    
-def shopping_cart(request):
-    pass
+def shoe_list(request):
+    shoes=Shoe.objects.all()
+    shoes_serializer=ShoesSerializer(shoes,many=True)
+    return Response(shoes_serializer.data)
 
-
-
+class CartItemModelViewSet(ModelViewSet):
+    serializer_class=CartItemSerializer
+    queryset=CartItem.objects.all()
+    
+    @action(detail=False, methods=["POST"])
+    def add_item(self,request):
+        try:
+            shoe_id=request.data.get("shoe_id")
+            
+            session_key=request.session.session_key
+            if not session_key:
+                request.session.save()
+                session_key=request.session.session_key
+            cart,created=Cart.objects.get_or_create(session_key=session_key)
+            cartitem,created=CartItem.objects.get_or_create(shoe_id=shoe_id,cart=cart)
+            if not created:
+                cartitem.quantity+=1
+                cartitem.save()
+            else:
+                cartitem.quantity=1
+                cartitem.save()
+                
+            serializer =CartItemSerializer(cartitem)
+            return Response({"data": serializer.data , "message":"Cartitem created successfully"})
+        
+        except Exception as e:
+            return Response({"error": str(e)},status=status.HTTP_400_BAD_REQUEST)
+               
+        
 @api_view(['GET'])
 def search(request):
     if "q" in request.GET and request.GET["q"] != "":
         q=request.GET["q"]
-        ayakkabilar=Shoes.objects.filter(isActive=True,title__contains=q).order_by("title")
-        kategoriler=Category.objects.all()
+        ayakkabilar=Shoe.objects.filter(isActive=True,title__contains=q).order_by("title")
+        #kategoriler=Category.objects.all()
         
         shoes_serializer = ShoesSerializer(ayakkabilar, many=True)
-        categories_serializer = CategorySerializer(kategoriler, many=True)
+        #categories_serializer = CategorySerializer(kategoriler, many=True)
 
         response_data = {
             'shoes': shoes_serializer.data,
-            'categories': categories_serializer.data
         }
-        
     else:
         #return redirect("/shoes")
         return HttpResponse("TAMAM")
     
     return Response(response_data)
 
-    """
-    return render(request,{
-        'categories': kategoriler,
-        'shoes': ayakkabilar
-    })
-    """
+
+@login_required()      
+def add_to_shopping_cart(request,shoes_id):
+    ayakkabi=get_object_or_404(Shoe,id=shoes_id)
+    cart, created = Cart.objects.get_or_create()
+
+    cart_item, created = CartItem.objects.get_or_create(cart=cart, shoe=ayakkabi)
+    if not created:
+        # Eğer ürün zaten sepetinizde varsa, miktarı arttır
+        cart_item.quantity += 1
+        cart_item.save()
+
+    return redirect('shopping_cart_detail')
+
     
-@api_view(['GET'])    
-def details(request,slug):
-    ayakkabilar=get_object_or_404(Shoes)
-    
-    #shoes_serializer = ShoesSerializer(ayakkabilar, many=True)
-    
-    context={
-        'shoes': ayakkabilar
+@login_required()    
+def shopping_cart_detail(request):
+    cart = Cart.objects.get(user=request.user)
+    cart_items = CartItem.objects.filter(cart=cart)
+
+    context = {
+        'cart': cart,
+        'cart_items': cart_items,
     }
-    
     return Response(context)
 
 
-#Cİnsiyete göre kategorideki ayakkabilar gelmesi
+
+#Cinsiyete göre kategorideki ayakkabilar gelmesi
 @api_view(['GET'])
 def getShoesByCategory(request):
     
@@ -122,12 +148,12 @@ def getShoesByCategory(request):
 
 
     if gender in ['M', 'F'] and category :
-        ayakkabilar=Shoes.objects.filter(isActive=True,gender=gender,categories=category).order_by('title')
+        ayakkabilar=Shoe.objects.filter(isActive=True,gender=gender,categories=category).order_by('title')
         kategoriler=Category.objects.filter(gender=gender)
         
         
         shoes_serializer = ShoesSerializer(ayakkabilar, many=True)
-        categories_serializer = CategorySerializer(kategoriler, many=True)
+        #categories_serializer = CategorySerializer(kategoriler, many=True)
 
         response_data = {
             'shoes': shoes_serializer.data,
@@ -170,7 +196,7 @@ def getShoesByGender(request):
     
     # Cinsiyet bilgisine göre ayakkabılar filtreleniyor
     if gender in ['M', 'F']:
-        ayakkabilar=Shoes.objects.filter(isActive=True,gender=gender).order_by('title')
+        ayakkabilar=Shoe.objects.filter(isActive=True,gender=gender).order_by('title')
     
         shoes_serializer = ShoesSerializer(ayakkabilar, many=True)
     

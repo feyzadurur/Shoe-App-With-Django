@@ -2,19 +2,27 @@ from django.shortcuts import render,redirect
 from django.contrib.auth import authenticate,login,logout,update_session_auth_hash
 from django.contrib.auth.models import User
 from django.contrib import messages
-from .forms import LoginUserForm,NewUserForm,UserPasswordChangeForm
+
 from django.http import HttpResponse
-from .serializer import UserSerializer
+from .serializer import UserSerializer, ChangePasswordSerializer
 from .models import User 
 from rest_framework.exceptions import AuthenticationFailed
 import jwt,datetime
 from datetime import datetime,timedelta 
 
+from rest_framework import status
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.decorators import api_view
+from django.contrib.auth.decorators import login_required
+
+from rest_framework.permissions import AllowAny
+
+
 # Create your views here.
 
 """{
@@ -27,37 +35,20 @@ from rest_framework.decorators import api_view
 }"""
 
 class RegisterView(APIView):
- 
+    authentication_classes = []  # Bu view için kimlik doğrulamayı devre dışı bırak
+    permission_classes = [AllowAny]  # Bu view için izin kontrollerini devre dışı bırak
+
     def post(self,request):
         serializer=UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
     
-
-    """def user_register(request):
-    if request.method== "POST":
-        form=NewUserForm(request.POST)
-        
-        if form.is_valid():
-            form.save()
-            
-            username=form.cleaned_data["username"]
-            password=form.cleaned_data["password1"]
-            
-            user=authenticate(request, username=username, password=password)
-            login(request,user)
-            return HttpResponse("Kayıt1") #Anasayfaya yönlendir
-        else:
-            return HttpResponse("Kayıt 2") #Registere yönlendir
-    else:
-        form=NewUserForm()
-        return HttpResponse("Kayıt 3") #Registere yönlendir
-
-    """
-    
     
 class LoginView(APIView):
+    authentication_classes = []  # Bu view için kimlik doğrulamayı devre dışı bırak
+    permission_classes = [AllowAny]  # Bu view için izin kontrollerini devre dışı bırak
+
     """
         {
         "username":"fd",
@@ -68,32 +59,30 @@ class LoginView(APIView):
         token=request.COOKIES.get('jwt')     
         
         if not token:
-            raise AuthenticationFailed('Unauthenticated!')  
+            raise AuthenticationFailed('Giriş yapılmadı!1')  
         
         try:
             payload=jwt.decode(token,'secret', algorithms=['HS256'])    
         except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed('Unauthenticated!')
+            raise AuthenticationFailed('Giriş yapılmadı!')
                                        
         user=User.objects.filter(id=payload['id']).first()
         serializer=UserSerializer(user)
         return Response(serializer.data)
     
     def post(self,request):
+        
         username=request.data['username']
         password=request.data['password']
         
         user=User.objects.filter(username=username).first()
         
         if user is None:
-            raise AuthenticationFailed('User not found!')
+            raise AuthenticationFailed('Kullanıcı bulunamadı!')
         
         if not user.check_password(password):
-            raise AuthenticationFailed('Incorrect password!')
-        
-        #if request.user.is_authenticated and "next" in request.GET:
-        #   return render(request,messages.SUCCESS,"Deneme")
-        
+            raise AuthenticationFailed('Şifre yanlış!')
+       
         payload={
             'id' : user.id,
             'exp' : datetime.utcnow() + timedelta(minutes=60),
@@ -111,38 +100,9 @@ class LoginView(APIView):
             'jwt':token
         }
         
+        
         return response
     
-    
-        
-    """@api_view(['POST']) 
-    def user_login(self,request):
-        if request.user.is_authenticated and "next" in request.GET:
-            return render(request,messages.SUCCESS,"Deneme")
-        if request.method=="POST":
-            form=LoginUserForm(request,data=request.POST)
-            if form.is_valid():
-                username=form.cleaned_data.get("username")
-                password=form.cleaned_data.get("password")
-                
-                user=authenticate(request,username=username,password=password)
-                
-                if user is not None:
-                    login(request,user)
-                    messages.add_message(request,messages.SUCCESS,"Giriş Başarılı")
-                    nextUrl=request.GET.get("next",None)
-                    if nextUrl is None:
-                        return HttpResponse("if 1") #Anasayfaya yönlendir
-                    else:
-                        return redirect(nextUrl)
-                else:
-                    return HttpResponse("else 1") #Logine yönlendir
-            else:
-                return HttpResponse("else 2")#Logine yönlendir
-        else:
-            form=LoginUserForm()
-            return HttpResponse("else 3")#Logine yönlendir
-        """
     
                 
 class UserView(APIView) :
@@ -163,8 +123,20 @@ class UserView(APIView) :
         
         
 class LogoutView(APIView):
+    authentication_classes = []  # Bu view için kimlik doğrulamayı devre dışı bırak
+    permission_classes = [IsAuthenticated]  # Bu view için izin kontrollerini devre dışı bırak
+
+    """ authentication_classes=[JWTAuthentication]
+    permission_classes=[IsAuthenticated]
+    
+        {
+        "username":"fd",
+        "password":"fd123"
+        }
+    
+    
+    """
     def post(self,request):
-        
         username=request.data['username']
         password=request.data['password']
         
@@ -176,8 +148,6 @@ class LogoutView(APIView):
         if not user.check_password(password):
             raise AuthenticationFailed('Incorrect password!')
         
-        #messages.add_message(request,messages.SUCCESS,"Çıkış Başarılı")
-        
         logout(request)
         response=Response()
         response.delete_cookie('jwt')
@@ -188,19 +158,7 @@ class LogoutView(APIView):
         
         return response
         
-    """   
-    def post(self,request):
-        response=Response()
-        response.delete_cookie('jwt')
-        response.data={
-            'message': 'success'
-        }
-        
-        return response
-    def user_logout(request):
-    messages.add_message(request,messages.SUCCESS,"Çıkış Başarılı")
-    logout(request)
-    return HttpResponse("Logout") #Anasayfaya yönlendir"""
+    
 
 #for postman       
 class Home(APIView):
@@ -211,22 +169,40 @@ class Home(APIView):
         content={'message': 'Hello, World!'}
         return Response(content)
 
-class ChangePasswordView(APIView):
-    
-    def post(self,request):
-        pass
-    def change_password(request):
-        if request.method=="POST":
-            form=UserPasswordChangeForm(request.user,request.POST)
-            if form.is_valid():
-                user=form.save()
-                update_session_auth_hash(request,user)
-                messages.success(request,"Parola güncellendi.")
-                return redirect("change_password")
-            else:
-                return render(request,{"form":form}) #Parola değiştirme ekranına yönlendir
-        form=UserPasswordChangeForm(request.user)
-        return render(request,{"form":form})#Parola değiştirme ekranına yönlendir
 
+class ChangePasswordView(APIView):
+    authentication_classes = []  # Bu view için kimlik doğrulamayı devre dışı bırak
+    permission_classes = [AllowAny]  # Bu view için izin kontrollerini devre dışı bırak
+
+    #permission_classes = [IsAuthenticated,]
+    
+    """{ 
+    "old_password":"fd123",
+    "new_password1":"fd1234",
+    "new_password2":"fd1234"
+    }
+    """    
+    
+    def post(self,request, *args, **kwargs):
+        user = request.user
+        serializer = ChangePasswordSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            
+            old_password = serializer.validated_data['old_password']
+            new_password = serializer.validated_data['new_password1']
+            
+            if not user.check_password(old_password):
+                return Response({"old_password": ["Şifre Yanlış."]}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if old_password == new_password:
+                return Response({"new_password": ["Yeni şifre eski şifre ile aynı olamaz."]}, status=status.HTTP_400_BAD_REQUEST)
+            
+            user.set_password(new_password)
+            user.save()
+           
+            return Response({"detay": "Parola değiştirildi"}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+     
 
  

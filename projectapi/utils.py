@@ -1,1 +1,0 @@
-#buraya ekleme yapabilirsin

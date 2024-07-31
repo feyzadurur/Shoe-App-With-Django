@@ -1,5 +1,7 @@
+from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
+from django.contrib.auth.models import User
 
 # Create your models here.
 
@@ -8,36 +10,18 @@ class Gender(models.TextChoices):
     MALE = 'M', 'Male'
     FEMALE = 'F', 'Female'
 
-"""class SizeNo(models.TextChoices):
-        otuzalti= '36',
-        otuzalti= '36',
-        otuzalti= '36',
-        otuzalti= '36',
-        otuzalti= '36',
-        
-        ('37', '37'),
-    """
+class Category(models.TextChoices):
+    SPOR_AYAKKABI= "Spor Ayakkabi"
+    BOT="Bot"
+    TERLIK="Terlik"
+    SANDALET="Sandalet"
+    TOPUKLU_AYAKKABI="Topuklu Ayakkabi"
+    KLASIK_AYAKKABI="Klasik Ayakkabi"
+   
 
-    
-class Category(models.Model):
-    name=models.CharField(max_length=50)
-    gender = models.CharField(max_length=6, choices=Gender.choices,default='Female')
-    slug=models.SlugField(default="",null=False,blank=True,unique=True,db_index=True,max_length=50)
-    
-    
-    def save(self, *args, **kwargs):
-        combined_string = f"{self.name} {self.gender}"
-        self.slug = slugify(combined_string)
-        super().save(args,kwargs)
-        
-    def __str__(self): #url oluşturma
-        return f"{self.name},{self.gender}"
-
-
-
-class Shoes(models.Model):
+class Shoe(models.Model):
     title=models.CharField(max_length=255)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE),
+    category = models.CharField(max_length=20, choices=Category.choices,)
     gender = models.CharField(max_length=6, choices=Gender.choices,)
     size = models.CharField(max_length=2)
     description=models.CharField(max_length=255,default="")
@@ -48,26 +32,29 @@ class Shoes(models.Model):
     isHome=models.BooleanField(default=True)
     slug=models.SlugField(default="",blank=True,null=False,unique=True,db_index=True)
     
-    categories=models.ManyToManyField(Category)
-    
     def __str__(self):
         return f"{self.title} , {self.size}"
     
     
     def save(self, *args, **kwargs):
-        """if self.gender == Gender.MALE:
-            valid_sizes = [size for size, _ in SizeNo.MALE_SIZES]
-        else:
-            valid_sizes = [size for size, _ in SizeNo.FEMALE_SIZES]
-
-        if self.size not in valid_sizes:
-            raise ValueError("Invalid shoe size for the selected gender")
-        
-        """
-        
-        
+    
         combined_string = f"{self.title} {self.gender}"
         self.slug = slugify(combined_string)
         
        
         super().save(*args,**kwargs)
+
+
+class Cart(models.Model):
+    session_key=models.CharField(max_length=50)
+    
+    def __str__(self):
+        return self.session_key
+    
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name="cartitems")
+    shoe = models.ForeignKey(Shoe, on_delete=models.CASCADE, related_name="cartitems")
+    quantity = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.quantity} x {self.shoe.title}"

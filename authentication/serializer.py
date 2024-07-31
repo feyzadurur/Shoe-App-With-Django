@@ -17,3 +17,19 @@ class UserSerializer(serializers.ModelSerializer):
             instance.set_password(password)
         instance.save()
         return instance
+    
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password1 = serializers.CharField(required=True)
+    new_password2 = serializers.CharField(required=True)
+    
+    def validate(self, data):
+        if data['new_password1'] != data['new_password2']:
+            raise serializers.ValidationError("İki şifre uyuşmadı.")
+        return data
+    def validate_new_password(self, value):
+        if len(value) < 6:
+            raise serializers.ValidationError("Yeni şifre 6 karakterden daha uzun olmalı.")
+        return value
+    

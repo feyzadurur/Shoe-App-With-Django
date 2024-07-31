@@ -1,16 +1,14 @@
-from rest_framework import serializers
-from .models import Category
+from rest_framework import serializers  
+from .models import Cart,CartItem,Shoe
 
-class CategorySerializer(serializers.Serializer):
-        
-    name=serializers.CharField(max_length=50)
-    gender = serializers.ChoiceField(choices=[('M', 'Male'), ('F', 'Female')])
-    
-    
+
 class ShoesSerializer(serializers.Serializer):
-    
+    """class Meta:
+        model= Shoe
+        fields=["id","gender","category","title","size","description","price","title","stock","image","isActive","isHome"]"""
     id=serializers.IntegerField(read_only=True)
     gender = serializers.CharField(max_length=6)
+    category = serializers.CharField(max_length=20)
     title=serializers.CharField(max_length=255)
     size = serializers.DecimalField(max_digits=3, decimal_places=1)
     description=serializers.CharField(default="")
@@ -19,37 +17,32 @@ class ShoesSerializer(serializers.Serializer):
     image=serializers.ImageField(default="")
     isActive=serializers.BooleanField(default=True)
     isHome=serializers.BooleanField(default=True)
+ 
+ 
+class CartItemSerializer(serializers.ModelSerializer):
+    shoe=ShoesSerializer(read_only=True)
+    shoe_id=serializers.IntegerField()
+    sub_total=serializers.SerializerMethodField()
+    class Meta:
+        model=CartItem
+        fields=["id","shoe","shoe_id","quantity","sub_total"]
+        
+    def get_sub_total(self, cartitem):
+        total_price=cartitem.quantity * cartitem.shoe.price
+        return total_price
     
-    #category=serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
-    #category eklenmedi
-
-
-
-
-
-"""from shoestore.models import Shoes, Category
-
-class CategorySerializer(serializers.ModelSerializer):
+class CartSerializer(serializers.ModelSerializer):
+    total_price=serializers.SerializerMethodField()
+    total_cartitems=serializers.SerializerMethodField()
+    cartitems=CartItemSerializer(read_only=True,many=True)
     class Meta:
-        model = Category
-        fields = ['id', 'name', 'gender']
-
-class ShoesSerializer(serializers.ModelSerializer):
-    category = CategorySerializer()
-
-    class Meta:
-        model = Shoes
-        fields = [
-            'id',
-            'gender',
-            'title',
-            'size',
-            'description',
-            'price',
-            'stock',
-            'image',
-            'isActive',
-            'isHome',
-            'category'
-        ]
-    """
+        model= Cart
+        fields= ["id","sessin_key","total_cartitems","total_price"]
+    
+    def get_total_price(self, cart): 
+        total_price=sum([item.quantity * item.shoe.price for item in cart.cartitems.all()] )
+        return total_price
+    
+    def get_total_cartitems(self, cart): 
+        total_cartitems=sum([item.quantity for item in cart.cartitems.all()])
+        return total_cartitems
