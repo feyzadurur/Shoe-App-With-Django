@@ -15,9 +15,14 @@ class ShoesSerializer(serializers.Serializer):
     price = serializers.DecimalField(max_digits=10, decimal_places=2)
     stock =serializers.IntegerField()
     image=serializers.ImageField(default="")
+    bestseller=serializers.BooleanField(default=False)
     isActive=serializers.BooleanField(default=True)
     isHome=serializers.BooleanField(default=True)
- 
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Shoe
+        fields = ['category'] 
  
 class CartItemSerializer(serializers.ModelSerializer):
     shoe=ShoesSerializer(read_only=True)

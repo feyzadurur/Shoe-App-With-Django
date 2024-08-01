@@ -11,12 +11,12 @@ class Gender(models.TextChoices):
     FEMALE = 'F', 'Female'
 
 class Category(models.TextChoices):
-    SPOR_AYAKKABI= "Spor Ayakkabi"
-    BOT="Bot"
-    TERLIK="Terlik"
-    SANDALET="Sandalet"
-    TOPUKLU_AYAKKABI="Topuklu Ayakkabi"
-    KLASIK_AYAKKABI="Klasik Ayakkabi"
+    SPOR= "spor"
+    BOT="bot"
+    TERLIK="terlik"
+    SANDALET="sandalet"
+    TOPUKLU="topuklu"
+    KLASIK="klasik"
    
 
 class Shoe(models.Model):
@@ -28,6 +28,7 @@ class Shoe(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     stock = models.IntegerField()
     image=models.ImageField(default="")
+    bestseller=models.BooleanField(default=False)
     isActive=models.BooleanField(default=True)
     isHome=models.BooleanField(default=True)
     slug=models.SlugField(default="",blank=True,null=False,unique=True,db_index=True)
@@ -38,12 +39,15 @@ class Shoe(models.Model):
     
     def save(self, *args, **kwargs):
     
-        combined_string = f"{self.title} {self.gender}"
+        combined_string = f"{self.title} {self.gender}{self.size}"
         self.slug = slugify(combined_string)
         
        
         super().save(*args,**kwargs)
-
+        
+    @classmethod
+    def get_bestsellers(cls):
+        return cls.objects.filter(bestseller=True, isActive=True)
 
 class Cart(models.Model):
     session_key=models.CharField(max_length=50)
