@@ -11,12 +11,12 @@ class Gender(models.TextChoices):
     FEMALE = 'F', 'Female'
 
 class Category(models.TextChoices):
-    SPOR= "spor"
-    BOT="bot"
-    TERLIK="terlik"
-    SANDALET="sandalet"
-    TOPUKLU="topuklu"
-    KLASIK="klasik"
+    SPOR= "Spor Ayakkabı"
+    BOT="Bot"
+    TERLIK="Terlik"
+    SANDALET="Sandalet"
+    TOPUKLU="Topuklu Ayakkabı"
+    KLASIK="Klasik Ayakkabı"
    
 
 class Shoe(models.Model):

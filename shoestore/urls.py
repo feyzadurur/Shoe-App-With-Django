@@ -1,4 +1,6 @@
 from django.urls import path,include
+
+from .views import CategoryListView,GetShoesByGender,GetShoesByCategory,SearchView
 from . import views
 from rest_framework.routers import DefaultRouter
 
@@ -10,8 +12,8 @@ urlpatterns = [
     path('cart/',include(router.urls)),
     path('bestseller/', views.bestseller_list),
     path('shoe-add/',views.shoe_add),
-    path('shoe-list/',views.shoe_list),
-    path('search/',views.search),
-    path('category/',views.getShoesByCategory),
-    path('filter/',views.getShoesByGender),
+    path('search/',SearchView.as_view()),
+    path('category/',CategoryListView.as_view()),
+    path('shoescategory/',GetShoesByCategory.as_view()),
+    path('filter/',GetShoesByGender.as_view()),
 ]

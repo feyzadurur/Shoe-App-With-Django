@@ -48,6 +48,10 @@ INSTALLED_APPS = [
     'shoestore',
 ]
 
+AUTHENTICATION_BACKENDS = [
+    'myapp.backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',  # Bu hala yerel kullanıcı adı ve parola ile oturum açma için
+]
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
@@ -56,7 +60,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.TokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
+        #'rest_framework.authentication.SessionAuthentication',
     ),
 }
 

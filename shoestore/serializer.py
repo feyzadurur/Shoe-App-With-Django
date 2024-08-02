@@ -1,5 +1,5 @@
 from rest_framework import serializers  
-from .models import Cart,CartItem,Shoe
+from .models import Cart,CartItem,Category,Shoe
 
 
 class ShoesSerializer(serializers.Serializer):
@@ -10,7 +10,7 @@ class ShoesSerializer(serializers.Serializer):
     gender = serializers.CharField(max_length=6)
     category = serializers.CharField(max_length=20)
     title=serializers.CharField(max_length=255)
-    size = serializers.DecimalField(max_digits=3, decimal_places=1)
+    size = serializers.IntegerField()
     description=serializers.CharField(default="")
     price = serializers.DecimalField(max_digits=10, decimal_places=2)
     stock =serializers.IntegerField()
@@ -19,10 +19,13 @@ class ShoesSerializer(serializers.Serializer):
     isActive=serializers.BooleanField(default=True)
     isHome=serializers.BooleanField(default=True)
 
-class CategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Shoe
-        fields = ['category'] 
+class CategorySerializer(serializers.Serializer):
+    value = serializers.CharField()
+    
+    
+class GenderSerializer(serializers.Serializer):
+    cinsiyet=serializers.CharField
+ 
  
 class CartItemSerializer(serializers.ModelSerializer):
     shoe=ShoesSerializer(read_only=True)

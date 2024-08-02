@@ -20,10 +20,26 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.decorators import api_view
 from django.contrib.auth.decorators import login_required
 
-from rest_framework.permissions import AllowAny
-
+from django.contrib.auth.backends import BaseBackend
+from django.contrib.auth.models import User
 
 # Create your views here.
+
+"""class EmailBackend(BaseBackend):
+    def authenticate(self, request, username=None, password=None, **kwargs):
+        try:
+            user = User.objects.get(email=username)
+            if user.check_password(password):
+                return user
+        except User.DoesNotExist:
+            return None
+
+    def get_user(self, user_id):
+        try:
+            return User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return None
+"""
 
 """{
 "first_name":"feyza",
@@ -36,7 +52,7 @@ from rest_framework.permissions import AllowAny
 
 class RegisterView(APIView):
     authentication_classes = []  # Bu view için kimlik doğrulamayı devre dışı bırak
-    permission_classes = [AllowAny]  # Bu view için izin kontrollerini devre dışı bırak
+    #permission_classes = [AllowAny]  # Bu view için izin kontrollerini devre dışı bırak
 
     def post(self,request):
         serializer=UserSerializer(data=request.data)
@@ -46,8 +62,8 @@ class RegisterView(APIView):
     
     
 class LoginView(APIView):
-    authentication_classes = []  # Bu view için kimlik doğrulamayı devre dışı bırak
-    permission_classes = [AllowAny]  # Bu view için izin kontrollerini devre dışı bırak
+    #authentication_classes = []  # Bu view için kimlik doğrulamayı devre dışı bırak
+    #permission_classes = [IsAuthenticated]  # Bu view için izin kontrollerini devre dışı bırak
 
     """
         {
@@ -55,21 +71,7 @@ class LoginView(APIView):
         "password":"fd123"
         }
     """
-    def get(self,request):
-        token=request.COOKIES.get('jwt')     
-        
-        if not token:
-            raise AuthenticationFailed('Giriş yapılmadı!1')  
-        
-        try:
-            payload=jwt.decode(token,'secret', algorithms=['HS256'])    
-        except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed('Giriş yapılmadı!')
-                                       
-        user=User.objects.filter(id=payload['id']).first()
-        serializer=UserSerializer(user)
-        return Response(serializer.data)
-    
+      
     def post(self,request):
         
         username=request.data['username']
@@ -99,10 +101,25 @@ class LoginView(APIView):
         response.data ={
             'jwt':token
         }
-        
+
         
         return response
     
+    def get(self,request):
+        token=request.COOKIES.get('jwt')     
+        
+        if not token:
+            raise AuthenticationFailed('Giriş yapılmadı!1')  
+        
+        try:
+            payload=jwt.decode(token,'secret', algorithms=['HS256'])    
+        except jwt.ExpiredSignatureError:
+            raise AuthenticationFailed('Giriş yapılmadı!')
+                                       
+        user=User.objects.filter(id=payload['id']).first()
+        serializer=UserSerializer(user)
+        return Response(serializer.data)
+  
     
                 
 class UserView(APIView) :
@@ -136,6 +153,7 @@ class LogoutView(APIView):
     
     
     """
+    
     def post(self,request):
         username=request.data['username']
         password=request.data['password']
@@ -172,7 +190,7 @@ class Home(APIView):
 
 class ChangePasswordView(APIView):
     authentication_classes = []  # Bu view için kimlik doğrulamayı devre dışı bırak
-    permission_classes = [AllowAny]  # Bu view için izin kontrollerini devre dışı bırak
+    #permission_classes = [AllowAny]  # Bu view için izin kontrollerini devre dışı bırak
 
     #permission_classes = [IsAuthenticated,]
     
