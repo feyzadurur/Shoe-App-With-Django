@@ -1,16 +1,22 @@
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.urls import path
 
-from . views import RegisterView,LoginView,UserView,Home,LogoutView,ChangePasswordView
+from . import views
 
 
 urlpatterns = [
-    path('',Home.as_view()),
-    path('login/',LoginView.as_view()),
-    path('register/',RegisterView.as_view()),
-    path('login/user/',UserView.as_view()),
-    path('login/logout/',LogoutView.as_view()),
-    path('login/change-password',ChangePasswordView.as_view()),
+    path('',views.home, name='home'),
+    path('login/',views.user_login, name='login'),
+    path('register/',views.user_register, name='register'),
+    path('login/user/',views.getUser, name='user'),
+    path('login/logout/',views.user_logout, name='login'),
+    path('login/change-password/',views.user_change_password,name='change_password'),
+    
+    path('yonetici/', views.admin_dashboard, name='admin_dashboard'),
+    path('yonetici/login/', views.admin_login, name='admin_login'),
+    path('yonetici/logout/', views.admin_logout, name='admin_logout'),
+    path('yonetici/password-change', views.admin_password_change, name='admin_password_change'),
+    
     path('token/',TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
    

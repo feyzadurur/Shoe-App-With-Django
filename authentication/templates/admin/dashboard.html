@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Paneli</title>
+</head>
+<body>
+    <h1>Admin Paneli</h1>
+    <p>Hoş geldiniz, {{ request.user.username }}!</p>
+    <a href="{% url 'admin_logout' %}">Çıkış Yap</a>
+</body>
+</html>

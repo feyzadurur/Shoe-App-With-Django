@@ -110,7 +110,6 @@ class CartItemModelViewSet(ModelViewSet):
             return Response({"error": str(e)},status=status.HTTP_400_BAD_REQUEST)
                
 class SearchView(APIView):
-
     def get(self, request):
         gender = request.query_params.get('gender')
         title = request.query_params.get('title')
@@ -165,10 +164,7 @@ class CategoryListView(APIView):
 #categorye göre ayakkabı filtrelemesi yapiyorr => Tüm ayakkabilar geliyor
 class GetShoesByCategory(APIView):
     def get(self, request):     
-        """category_name = request.data.get('category')
-        if not category_name:
-            return Response({'error': 'Category ismi gerekli'}, status=status.HTTP_400_BAD_REQUEST)
-        """
+        
         category_name = request.query_params.get('category')
         if not category_name:
             return Response({'error': 'Category ismi gerekli'}, status=status.HTTP_400_BAD_REQUEST)
